@@ -20,6 +20,8 @@ class MainActivity : AppCompatActivity() {
 
         textView = findViewById(R.id.main_text_view)
 
+        DataCache.put(user)
+
         LifecycleManager.manager.registerLiveData(user,this.lifecycle)
 
         ViewModelQuick.create(this, MainViewModel::class.java,this,textView)

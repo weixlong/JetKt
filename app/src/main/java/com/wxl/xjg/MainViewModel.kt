@@ -21,17 +21,17 @@ import com.wxl.common.wiget.LoadingDialog
 class MainViewModel : AbsViewModel() {
 
     lateinit var presenter: MainPresenter
-    val user = UserBean()
 
     override fun onCreate(vararg arg: Any?) {
         if (arg.isNotEmpty()) {
             if (arg[0] is MainActivity) {
                 presenter = ViewModelQuick.observer(arg[0] as MainActivity, MainPresenter::class.java)
-                LifecycleManager.manager.registerLiveData(user,(arg[0] as MainActivity).lifecycle)
             }
             if (arg.size > 1 && arg[1] is TextView) {
 
-                user.observe(arg[0] as MainActivity, Observer {
+                val user = DataCache.get(UserBean::class.java)
+
+                user?.observe(arg[0] as MainActivity, Observer {
                     Loog.d("MainViewModel refresh ")
                 })
 
@@ -42,8 +42,8 @@ class MainViewModel : AbsViewModel() {
                     .execute(object : HttpCallback<String>() {
 
                         override fun success(data: String) {
-                            user.userName = data
-                            LifecycleManager.manager.refreshLiveData(user)
+                            user?.userName = data
+                            user?.let { LifecycleManager.manager.refreshLiveData(user) }
                         }
 
                         override fun showLoadDialog(context: Context?): Dialog? {
@@ -56,5 +56,5 @@ class MainViewModel : AbsViewModel() {
         }
     }
 
-    
+
 }
