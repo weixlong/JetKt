@@ -6,6 +6,7 @@ package com.wxl.xjg
  * subscribe :
  */
 
+@Suppress("UNCHECKED_CAST")
 class DataCache {
 
     companion object{

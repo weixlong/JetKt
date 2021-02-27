@@ -39,10 +39,12 @@ class MainViewModel : AbsViewModel() {
                 textView.setOnClickListener {
                     OkGoApi.api.post((arg[0] as MainActivity).lifecycle)
                     .params("service", "Home.getConfig")
-                    .execute(object : HttpCallback<String>() {
+                    .execute(object : HttpCallback<BaseData<ArrayList<ConfigBean>>>() {
 
-                        override fun success(data: String) {
-                            user?.userName = data
+                        override fun success(data: BaseData<ArrayList<ConfigBean>>) {
+                            user?.userName = data.data.info.takeIf {
+                                !it.isNullOrEmpty()
+                            }?.get(0)?.promotionlink
                             user?.let { LifecycleManager.manager.refreshLiveData(user) }
                         }
 
