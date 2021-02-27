@@ -25,7 +25,7 @@ import kotlin.collections.HashMap
 class OkGoApi {
 
     private val lifecycles = HashMap<String, ArrayList<String>>()
-    private lateinit var baseUrl:String
+    private lateinit var baseUrl: String
 
     companion object {
         val api = OGA.oga
@@ -41,21 +41,25 @@ class OkGoApi {
         val headerParams = HttpHeaders()
         headerParams.put("token", token)
         headerParams.put("userId", userId)
-        OkGo.getInstance()
-            .setCacheMode(CacheMode.NO_CACHE)
-            .addCommonHeaders(headerParams)
-        OkGo.getInstance().okHttpClient = OkGo.getInstance().okHttpClient.newBuilder()
-            .connectTimeout(AppConstant.outTime, TimeUnit.SECONDS)
-            .readTimeout(AppConstant.outTime, TimeUnit.SECONDS)
-            .writeTimeout(AppConstant.outTime, TimeUnit.SECONDS)
-            .build()
+        OkGo.getInstance().apply {
+            okHttpClient = okHttpClient.newBuilder().also {
+                it.run {
+                    connectTimeout(AppConstant.outTime, TimeUnit.SECONDS)
+                    readTimeout(AppConstant.outTime, TimeUnit.SECONDS)
+                    writeTimeout(AppConstant.outTime, TimeUnit.SECONDS)
+                }
+            }.build()
+        }.run {
+            cacheMode = CacheMode.NO_CACHE
+            addCommonHeaders(headerParams)
+        }
     }
 
 
     /**
      * 设置基础路径
      */
-    fun setBaseUrl(baseUrl:String, app : Application){
+    fun setBaseUrl(baseUrl: String, app: Application) {
         this.baseUrl = baseUrl
         OkGo.getInstance().init(app)
     }
@@ -98,7 +102,7 @@ class OkGoApi {
      */
     fun get(lifecycle: Lifecycle): GetRequest<Any> {
         val tag = UUID.randomUUID().toString() + System.currentTimeMillis()
-        lifecycle.addObserver(LifecycleHandler(tag,3))
+        lifecycle.addObserver(LifecycleHandler(tag, 3))
         return OkGo.get<Any>(baseUrl).tag(tag)
     }
 
@@ -119,7 +123,7 @@ class OkGoApi {
      */
     fun post(lifecycle: Lifecycle): PostRequest<Any> {
         val tag = UUID.randomUUID().toString() + System.currentTimeMillis()
-        lifecycle.addObserver(LifecycleHandler(tag,3))
+        lifecycle.addObserver(LifecycleHandler(tag, 3))
         return OkGo.post<Any>(baseUrl).tag(tag)
     }
 
@@ -151,7 +155,7 @@ class OkGoApi {
     /**
      * 取消该类(栈顶)下的所有请求
      */
-   internal fun cancelTargetApi(targetCls: Class<Any>) {
+    internal fun cancelTargetApi(targetCls: Class<Any>) {
         if (lifecycles.containsKey(targetCls.name)) {
             lifecycles.remove(targetCls.name)?.let {
                 for (s in it) {

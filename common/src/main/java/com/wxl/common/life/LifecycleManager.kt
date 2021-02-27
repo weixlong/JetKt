@@ -12,6 +12,7 @@ import kotlin.collections.HashMap
  * create user : wxl
  * subscribe :
  */
+@Suppress("UNCHECKED_CAST")
 class LifecycleManager private constructor() {
 
     private val lifecycleObserverCache = HashMap<String, ArrayList<LifecycleObserver>>()
@@ -30,11 +31,11 @@ class LifecycleManager private constructor() {
     /**
      * 注册一个生命周期
      */
+    @Synchronized
     fun addObserver(lifecycle: Lifecycle, observer: LifecycleObserver) {
         synchronized(lifecycle) {
             lifecycle.addObserver(observer)
-            val tag: String =
-                lifecycle.javaClass.canonicalName.toString() + UUID.randomUUID() + System.currentTimeMillis()
+            val tag: String = lifecycle.javaClass.canonicalName?.toString() + UUID.randomUUID() + System.currentTimeMillis()
             lifecycle.addObserver(LifecycleHandler(tag, 1))
             lifecycleCache[tag] = lifecycle
             if (!lifecycleObserverCache.containsKey(tag)) {
@@ -65,14 +66,15 @@ class LifecycleManager private constructor() {
      * 注册一个自动解除注册的LiveData
      * 如一个类在项目中频繁被使用，建议只注册一次，并做全局缓存从缓存中拿，减少运行内存开支
      */
+    @Synchronized
     fun <T : AbsLiveData<T>> registerLiveData(t: T, lifecycle: Lifecycle) {
         synchronized(t) {
             val tag: String = t.javaClass.name + UUID.randomUUID() + System.currentTimeMillis()
             lifecycle.addObserver(LifecycleHandler(tag, 2, t.javaClass.name))
             if (!liveDataCache.containsKey(t.javaClass.name)) {
-                liveDataCache.put(t.javaClass.name, HashMap())
+                liveDataCache[t.javaClass.name] = HashMap()
             }
-            liveDataCache.get(t.javaClass.name)?.let { it.put(tag, t as AbsLiveData<Any>) }
+            liveDataCache[t.javaClass.name]?.let { it.put(tag, t as AbsLiveData<Any>) }
         }
     }
 
@@ -80,7 +82,7 @@ class LifecycleManager private constructor() {
      * 同步刷新数据
      */
     fun <T : AbsLiveData<T>> refreshLiveData(t: T) {
-        liveDataCache.get(t.javaClass.name)?.let {
+        liveDataCache[t.javaClass.name]?.let {
             it.let {
                 val iterator = it.entries.iterator()
                 while (iterator.hasNext()) {
@@ -96,7 +98,7 @@ class LifecycleManager private constructor() {
      * 异步刷新数据
      */
     fun <T : AbsLiveData<T>> postLiveData(t: T) {
-        liveDataCache.get(t.javaClass.name)?.let {
+        liveDataCache[t.javaClass.name]?.let {
             it.let {
                 val iterator = it.entries.iterator()
                 while (iterator.hasNext()) {
@@ -123,7 +125,7 @@ class LifecycleManager private constructor() {
      */
     internal fun unRegisterLiveDataByTag(dataCls: String, tag: String) {
         if (liveDataCache.containsKey(dataCls)) {
-            val map = liveDataCache.get(dataCls)
+            val map = liveDataCache[dataCls]
             map?.let {
                 if (map.containsKey(tag)) {
                     map.remove(tag)

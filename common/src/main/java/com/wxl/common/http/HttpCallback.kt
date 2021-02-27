@@ -19,6 +19,7 @@ import java.lang.reflect.Type
  * create user : wxl
  * subscribe :
  */
+@Suppress("UNCHECKED_CAST", "JAVA_CLASS_ON_COMPANION")
 abstract class HttpCallback<T> : Callback<Any> {
 
     protected open var loadDialog: Dialog? = null
@@ -46,20 +47,22 @@ abstract class HttpCallback<T> : Callback<Any> {
     override fun convertResponse(response: okhttp3.Response?): T? {
 
         try {
-            var data:String = response?.body()?.string().toString()
 
-            if (response != null && response.isSuccessful && !TextUtils.isEmpty(data)
-            ) {
+            response ?: return "" as T
+
+            val data: String = response.body()?.string().toString()
+
+            response.takeIf { it.isSuccessful }?.takeIf { !TextUtils.isEmpty(data) }?.let {
+
                 val type = findConvertType()
 
-                if(TextUtils.equals(type.toString(),String::class.java.name)){
+                if (TextUtils.equals(type.toString(), String::class.java.name)) {
                     return data as T
                 }
 
                 return JSONObject.parseObject(data, type)
             }
-
-        } catch (e:Exception){
+        } catch (e: Exception) {
             Toll.toll("数据返回不正确")
             error(e)
         }
@@ -77,9 +80,8 @@ abstract class HttpCallback<T> : Callback<Any> {
 
     override fun onStart(request: Request<Any, out Request<Any, Request<*, *>>>?) {
         loadDialog = showLoadDialog(AppContext.appContext.getCurrentActivity())
-        if (loadDialog != null && !loadDialog?.isShowing!!) {
-            loadDialog?.show()
-        }
+        loadDialog?:return
+        loadDialog.takeIf { !it?.isShowing!! }?.show()
     }
 
 
@@ -98,7 +100,7 @@ abstract class HttpCallback<T> : Callback<Any> {
             val arrayOfTypes = superclass.actualTypeArguments
             return arrayOfTypes[0]
         }
-        return String.javaClass
+        return String::class.java
     }
 
 }

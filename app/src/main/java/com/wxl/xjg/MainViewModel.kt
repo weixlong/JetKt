@@ -24,9 +24,9 @@ class MainViewModel : AbsViewModel() {
 
     override fun onCreate(vararg arg: Any?) {
         if (arg.isNotEmpty()) {
-            if (arg[0] is MainActivity) {
-                presenter = ViewModelQuick.observer(arg[0] as MainActivity, MainPresenter::class.java)
-            }
+
+            presenter = ViewModelQuick.observer(arg[0] as MainActivity, MainPresenter::class.java)
+
             if (arg.size > 1 && arg[1] is TextView) {
 
                 val user = DataCache.get(UserBean::class.java)
